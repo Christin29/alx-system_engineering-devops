@@ -1,0 +1,72 @@
+#!/bin/bash
+
+# default values
+create=false
+push=false
+filename=""
+
+# parse options
+while getopts "cp" opt; do
+        case ${opt} in
+                c ) create=true ;;
+                p ) push=true ;;
+                * ) echo "Invalid option: -$OPTARG" >&2
+                        exit 1;;
+        esac
+done
+
+# shift the parsed option out of the argument list
+shift $((OPTIND -1))
+# check values of the flag variables
+if [ "$create" = true ]; then
+
+        # get the file name
+        read -p "Filename: " filename
+
+        # check if the filename is not empty
+        if [ -n "$filename" ]; then
+
+                if [ ! -e "$filename" ]; then
+                        # create the file
+                        touch $filename
+
+                        # insert the SHEBANG
+                        echo "#!/bin/bash"> $filename
+                fi
+
+                #open the file in vi
+                vi $filename
+
+                # make the file executable
+                chmod u+x $filename
+
+        else
+                echo "The filename can't be empty"
+                exit 0
+
+        fi
+
+fi
+if [ "$push" = true ]; then
+
+        if [ -z "$filename" ]; then
+                read -p "Enter the filename: " filename
+        fi
+
+        if [ -z "$filename" ]; then
+                echo "The filename can't be empty"
+                exit 0
+        fi
+
+        # add to git
+        if git add $filename; then
+
+                # commit changes
+                read -p "Commit message" message
+                git commit -m "$message"
+
+                # push the changes
+                git push
+        fi
+
+fi
